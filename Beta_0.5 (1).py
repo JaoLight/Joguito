@@ -2,246 +2,299 @@ import random
 import sys
 import os
 import time
+from colorama import Fore, Style, init
 
-BOLD = '\033[1m'
-END = '\033[0m'
-NEG = '\033[7m'
-AZUL = '\033[1;36m'
-VERM = '\033[1;31m'
-FAMAR = '\033[1;33m'
-VERD = '\033[1;32m'
+# Initialize colorama
+init()
 
-class Personagem:
+# Text styles and colors
+BOLD = Style.BRIGHT
+END = Style.RESET_ALL
+BLUE = Fore.CYAN
+RED = Fore.RED
+YELLOW = Fore.YELLOW
+GREEN = Fore.GREEN
+
+def colored_text(text, color=Fore.WHITE, style=Style.NORMAL):
+    return f"{style}{color}{text}{END}"
+
+# Text effects
+def slow_print(text, delay=0.03, end='\n'):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(delay)
+    print(end=end)
+
+def very_slow_print(text, delay=0.07):
+    for char in text:
+        print(char, end='', flush=True)
+        time.sleep(delay)
+    print()
+
+def fade_in(text, delay=0.05):
+    clear_screen()
+    for i in range(1, len(text)+1):
+        print(text[:i], end='\r', flush=True)
+        time.sleep(delay)
+    print()
+
+def clear_screen():
+    os.system('cls' if os.name == 'nt' else 'clear')
+
+class Player:
     def __init__(self, name):
         self.name = name
-        self.hp = 20
-        self.df = 0
-        self.atk = 3
-        self.crit = 0
-        self.sword = None
-        self.armor = None
-
-    def luta(self):
-        atk = random.randint(self.atk - 2, self.atk)
-        crit = random.randint(0, self.crit)
-        atk_completo = atk + crit
-        return atk_completo
-    
-    def invent(self):
-        self.key = []
-        self.other = []
-        self.armas = []
-        self.armaduras = []
-
-    def conseguir_chave(self, nome):
-        input(f'[Você conseguiu uma {nome}]')
-        self.key.append(nome)
-
-    def conseguir_outro(self, nome):
-        input(f'[Você pegou {nome}]')
-        self.other.append(nome)
-
-    def conseguir_arma(self, nome):
-        input(f'[Você conseguiu {nome}]')
-        self.armas.append(nome)
-
-    def conseguir_armadura(self, nome):
-        input(f'[Você conseguiu {nome}]')
-        self.armaduras.append(nome)
-
-    def adaga_pequena(self, funcao):
-        if funcao == 'equipar':
-            input('[Você equipou a "Adaga Pequena".]')
-            if self.sword != None:
-                self.armas = self.sword
-            self.armas.remove('Adaga Pequena')
-            self.sword = 'Adaga Pequena'
-            self.atk = self.atk + 2
-        elif funcao == 'desequipar':
-            input('[A adaga foi guardada no inventário.]')
-            self.armas.append('Adaga Pequena')
-            self.sword = None
-            self.atk = self.atk - 2
-
-    def espada_enferrujada(self, funcao):
-        if funcao == 'equipar':
-            input('[Você equipou a "Espada Enferrujada".]')
-            if self.sword != None:
-                self.armas = self.sword
-            self.armas.remove('Espada Enferrujada')
-            self.sword = 'Espada Enferrujada'
-            self.atk = self.atk + 5
-            self.crit = self.crit + 1
-        elif funcao == 'desequipar':
-            input('[A espada foi guardada no inventário.]')
-            self.armas.append('Espada Enferrujada')
-            self.sword = None
-            self.atk = self.atk - 5
-            self.crit = self.crit - 1
-
-
-itens = {
-    'chaves': 'Nenhuma',
-    'outro': 'Nada',
-    'arma': {
-        'adaga_peq': {
-            'atk': 2,
-            'crit': 0,
-            'frase': f'''Adaga Pequena
-    {VERM}+2 Dano / +0 Crítico{END}'''
-        },
-        'esp_enf': {
-            'atk': 5,
-            'crit': 1,
-            'frase': f'''Espada Enferrujada
-    {VERM}+5 Dano / +1 Crítico{END}'''
+        self.health = 20
+        self.defense = 0
+        self.attack = 3
+        self.crit_chance = 0
+        self.equipped_weapon = None
+        self.equipped_armor = None
+        self.inventory = {
+            'keys': [],
+            'misc_items': [],
+            'weapons': [],
+            'armor_pieces': []
         }
-    },
-    'cbc': 'Nenhum',
-    'peito': 'Nenhum',
-    'mao': 'Nenhuma',
-    'pe': 'Nenhum'
-}
+        self.reputation = 0
 
-quests = {
-    'Primeiras': ['']
-}
+    def calculate_damage(self):
+        base_damage = random.randint(self.attack - 2, self.attack)
+        crit_damage = random.randint(0, self.crit_chance)
+        return base_damage + crit_damage
 
-armad = 0
-armac = 0
+    def add_to_inventory(self, item_type, item_name):
+        self.inventory[item_type].append(item_name)
+        input(f'[Você conseguiu: {item_name}]')
 
+    def equip_item(self, item_type, item_name):
+        if item_type == 'weapons':
+            if self.equipped_weapon:
+                self.inventory['weapons'].append(self.equipped_weapon)
+            if item_name in self.inventory['weapons']:
+                self.equipped_weapon = item_name
+                self.inventory['weapons'].remove(item_name)
+                input(f'[Você equipou: {item_name}]')
+            else:
+                input('[Item não encontrado no inventário!]')
 
+    def has_item(self, item_type, item_name):
+        return item_name in self.inventory.get(item_type, [])
 
-if prof['armor']['arma_eq'] == 'adaga':
-    armad = itens['arma']['adaga_peq']['atk']
-    armac = itens['arma']['adaga_peq']['crit']
+    def check_health(self):
+        if self.health <= 0:
+            slow_print(f"\n{RED}{BOLD}GAME OVER{END}", delay=0.1)
+            sys.exit()
+        elif self.health <= 5:
+            slow_print(f"{YELLOW}Aviso: Sua saúde está crítica!{END}")
 
-if prof['armor']['arma'] == 'espada':
-    armad = itens['arma']['esp_enf']['atk']
-    armac = itens['arma']['esp_enf']['crit']
-
-mons = {
-    'Sapo Azul': {
-        'hp': 10,
-        'atk': 2,
-        'sacanaji': 999
-    },
-
-    'Cobra': {
-        'hp': 1,
-        'atk': 18
-    }
-}
-
-bixo = {
-    ''
-}
-
-
-def sapotk():
-    mtk = random.randint(mons['Sapo Azul']['atk'] - 2, mons['Sapo Azul']['atk'])
-    if mtk <= 0:
-        mtk = 0
-    prof['status']['hp'] = prof['status']['hp'] - mtk
-    return mtk
-
-
-mboss = {
-    'jacare': {
-        'hp': 50,
-        'atk': 10
-    }
-}
-
-
-def ranmo():
-    monstro = list(mons.keys())
-    rmons = random.choice(monstro)
-    return rmons
-
-
-def rantk():
-    rcrit = random.randint(0, prof['status']['crit'])
-    ratk = random.randint(prof['status']['atk'] - 2, prof['status']['atk'])
-    ratk = ratk + rcrit
-    return ratk
-
-
-input('Escuro')
-input('Apenas')
-input('Escuro...')
-slow_print('...', delay=0.7)
-while True:
-    un = str(input(f'{BOLD}[Qual é meu nome mesmo?]{END} '))
-
-    if un == '':
-        input('[Eu tenho um nome...]')
-        continue
-    else:
-        break
-input(f'{un}.....')
-os.system('cls' if os.name == 'nt' else 'clear')
-slow_print("...", delay=0.5)
-input('Não sei onde estou')
-input("Preciso fazer algo...")
-por = ''
-
-while True:
-    print(f'{BOLD}======================================={END}')
-    print(f'{BOLD}[DEVO ME LEVANTAR?]{END}')
-    print('Levantar[a] Continuar Deitado[b]')
-    print(f'{BOLD}======================================={END}')
-    his = input('')
-
-    if his == 'b':
-        input("[levanta vagabundo]")
-
-    elif his == 'a':
-        input('Há uma luz saindo de uma pequena janela')
-        break
-
-    else:
-        input('Escolha uma opção válida')
-        continue
-
-input('Você corre ate lá e vê algo')
-input('A luz machuca seus olhos')
-input('Finalmente você percebe')
-slow_print("...", delay=0.7)
-input('[Estou preso]')
 
 escolhas = {
-    'pt': {
-        'msg': 'Você vê uma porta de metal',
-        'est': 'Está trancada',
-        'ac': 'olhar'
+    'porta': {
+        'descricao': 'Porta de metal enferrujada',
+        'estado': 'trancada',
+        'acao': 'examinar',
+        'opcao': 'a',
+        'mensagem': 'Você vê uma porta de metal com um cadeado resistente',
+        'requer_item': None,
+        'item_necessario': None
     },
-    'jn': {
-        'msg': 'Você vê um grande gramado',
-        'est': 'bloqueada',
-        'ac': 'olhar'
+    'janela': {
+        'descricao': 'Pequena janela com barras',
+        'estado': 'bloqueada',
+        'acao': 'olhar',
+        'opcao': 'b',
+        'mensagem': 'Através das barras, você vê um grande gramado lá fora',
+        'requer_item': None,
+        'item_necessario': None
     },
-    'cd': {
-        'msg': 'Tem um cadeado trancando essa porta',
-        'est': 'trancado',
-        'ac': 'olhar'
+    'cadeado': {
+        'descricao': 'Cadeado na porta',
+        'estado': 'trancado',
+        'acao': 'inspecionar',
+        'opcao': 'c',
+        'mensagem': 'Um cadeado resistente tranca a porta',
+        'requer_item': None,
+        'item_necessario': None
     },
     'caixa': {
-        'msg': 'Você vê uma caixa no canto da sala',
-        'est': 'Fechada',
-        'ac': 'Abrir'
-    },
-    'cv': {
-        'msg': 'Tem uma chave dentro da caixa',
-        'est': 'jogada',
-        'ac': 'pegar'
+        'descricao': 'Caixa de madeira no canto',
+        'estado': 'fechada',
+        'acao': 'abrir',
+        'opcao': 'd',
+        'mensagem': 'Uma caixa de madeira empoeirada está no canto',
+        'requer_item': None,
+        'item_necessario': None
     }
 }
 
+def mostrar_cena(player):
+    clear_screen()
+    slow_print(f"{BLUE}======================================={END}", delay=0.01)
+    slow_print(f"{BOLD}{colored_text('[CELA DA PRISÃO]', YELLOW)}{END}", delay=0.01)
+    slow_print(f"{BLUE}======================================={END}\n", delay=0.01)
+    
+    # Mostra descrição da cena
+    slow_print("Você está em uma cela úmida e escura. Há:", delay=0.01)
+    
+    # Mostra opções disponíveis
+    for item_id, item in escolhas.items():
+        if item['estado'] not in ['removido', 'invisivel']:
+            slow_print(f"- {item['descricao'].capitalize()} ({colored_text(item['opcao'], GREEN)}) [{item['estado']}]", delay=0.01)
+    
+    slow_print(f"\n{BLUE}======================================={END}", delay=0.01)
+    slow_print("Sair do jogo (q)")
+    slow_print(f"{BLUE}======================================={END}", delay=0.01)
+
+def processar_escolha(player):
+    while True:
+        mostrar_cena(player)
+        escolha = input("\nO que você faz? ").lower().strip()
+        
+        if escolha == 'q':
+            sys.exit()
+        
+        # Procura a escolha correspondente
+        acao = None
+        for item_id, item in escolhas.items():
+            if item['opcao'] == escolha:
+                acao = item_id
+                break
+        
+        if acao:
+            clear_screen()
+            slow_print(f"\n{escolhas[acao]['mensagem']}", delay=0.01)
+            
+            # Lógica específica para cada ação
+            if acao == 'caixa' and escolhas['caixa']['estado'] == 'fechada':
+                slow_print("\nVocê abre a caixa e encontra uma chave enferrujada!", delay=0.01)
+                input()
+                player.add_to_inventory('keys', 'Chave da cela')
+                escolhas['caixa']['estado'] = 'aberta'
+                escolhas['porta']['requer_item'] = 'keys'
+                escolhas['porta']['item_necessario'] = 'Chave da cela'
+                clear_screen()
+            
+            elif acao == 'porta':
+                if player.has_item('keys', 'Chave da cela'):
+                    slow_print("\nA chave se encaixa perfeitamente no cadeado!")
+                    slow_print("A porta se abre com um rangido sinistro...")
+                    escolhas['porta']['estado'] = 'aberta'
+                    return True  # Indica que a porta foi aberta
+                else:
+                    slow_print("\nA porta está trancada. Você precisa de uma chave.")
+            
+            input("\nPressione Enter para continuar...")
+        else:
+            slow_print("Opção inválida. Tente novamente.", delay=0.02)
+
+def game_introduction():
+    clear_screen()
+    slow_print(f'[{BLUE}Pressione ENTER para avançar]{END}')
+    input()
+    clear_screen()
+    very_slow_print("Escuro...", delay=0.2)
+    very_slow_print(".    ", delay=0.2)
+    very_slow_print(".    ", delay=0.2)
+    very_slow_print(".    ", delay=0.2)
+    very_slow_print("Apenas escuro...", delay=0.2)
+    very_slow_print(".    ", delay=0.2)
+    very_slow_print(".    ", delay=0.2)
+    very_slow_print(".    ", delay=0.2)
+    input()
+    clear_screen()
+    slow_print("...", delay=0.7)
+    
+    # Get player name
+    while True:
+        slow_print(f'{BOLD}[Qual é meu nome mesmo?]{END}', delay=0.02, end=' ')
+        player_name = input().strip()
+        if player_name:
+            break
+        slow_print('[Eu tenho um nome...]', delay=0.09)
+        input()
+        clear_screen()
+    
+    clear_screen()
+    slow_print(f"{player_name}...", delay=0.09)
+    input()
+    clear_screen()
+    slow_print("Não sei onde estou...")
+    input()
+    clear_screen()
+    slow_print("Preciso fazer algo...")
+    input()
+    
+    return player_name
+
+def initial_scene(player):
+    while True:
+        clear_screen()
+        menu_text = f"""
+{BOLD}======================================={END}
+{colored_text("[DEVO ME LEVANTAR?]", BOLD)}
+{colored_text("1 - Levantar", GREEN)}
+{colored_text("2 - Continuar deitado", RED)}
+{BOLD}======================================={END}
+
+Digite sua escolha:"""
+        slow_print(menu_text, delay=0.01)
+        
+        choice = input().strip()\
+        
+        if choice == '1':
+            slow_print("\nHá uma luz saindo de uma pequena janela...")
+            input()
+            break
+        elif choice == '2':
+            slow_print('\n[Levanta, vagabundo!]', delay=0.02)
+            input()
+            clear_screen()
+        else:
+            slow_print('\nEscolha uma opção válida!', delay=0.02)
+            clear_screen()
+
+    # Continue the story
+    clear_screen()
+    slow_print('Você corre até a luz...', delay=0.05)
+    input()
+    slow_print('A claridade machuca seus olhos...', delay=0.05)
+    input()
+    very_slow_print("...", delay=0.7)
+    input()
+    clear_screen()
+    slow_print('[Estou preso...]', delay=0.1)
+    input()
+    
+    # Inicia o sistema de escolhas interativas
+    porta_aberta = False
+    while not porta_aberta:
+        porta_aberta = processar_escolha(player)
+    
+    # Continuação após sair da cela
+    clear_screen()
+    slow_print("\nVocê sai da cela e se encontra em um corredor escuro...")
+    input()
+
+def main():
+    # Game setup
+    player_name = game_introduction()
+    hero = Player(player_name)
+    
+    # Start the story
+    initial_scene(hero)
+    
+    # Continue with your existing game flow...
+    slow_print("\nSua aventura está apenas começando...")
+    input()
+
+if __name__ == "__main__":
+    main()
 
 def hist():
+    slow_print
     print(f'{AZUL}======================================={END}')
-    print(f'{BOLD}[O QUE FAÇO AGORA?]{END}')
+    print(f'{colored_text("[O QUE FAÇO AGORA?]"), BOLD}')
     print('Olhar na janela[a] Olhar em volta[b]')
     print(f'{AZUL}======================================={END}')
 
