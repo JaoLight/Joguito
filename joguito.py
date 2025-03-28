@@ -87,6 +87,71 @@ class Player:
         elif self.health <= 5:
             slow_print(f"{YELLOW}Aviso: Sua saúde está crítica!{END}")
 
+# Game Signs
+class SignsManager:
+    def __init__(self):
+        self.signs = {
+            # Placa 1: Direções (Floresta x Rio)
+            "floresta_rio": {
+                "header": f"--- PLACA ---",
+                "text": "[<--- Floresta x Rio --->]",
+                "footer": "------------------"
+            },
+            # Placa 2: Instruções do Menu (Exclusiva!)
+            "menu_jogo": {
+                "header": f"{YELLOW}======================================={END}",
+                "text": f"{BOLD}    Pressione 'm' para abrir o menu{END}",
+                "footer": f"{YELLOW}======================================={END}"
+            }
+        }
+
+    def show_sign(self, sign_name):
+        if sign_name in self.signs:
+            sign = self.signs[sign_name]
+            slow_print(f"\n{BLUE}{sign['header']}{END}", delay=0.01)
+            slow_print(sign["text"], delay=0.01)
+            slow_print(f"{BLUE}{sign['footer']}{END}\n", delay=0.01)
+        else:
+            slow_print(f"{RED}Placa não encontrada!{END}")
+            input()
+
+sign = SignsManager()
+
+# Game Menu
+def global_input(player, prompt=""):
+    while True:
+        user_input = input(prompt).lower()
+        if user_input == 'm':
+            show_status(player)
+            clear_screen()
+            print(prompt, end="")
+            continue
+        return user_input
+
+signs_manager = SignsManager()
+
+def show_status(player):
+    clear_screen()
+    slow_print(f'''{BLUE}====== STATUS DE {player.name.upper()} ======={END}
+
+{GREEN}❤️  SAÚDE:{END} {BOLD}{player.health:02d}/20{END}
+{YELLOW}⚔️  ATAQUE:{END} {BOLD}{player.attack}{END}
+{RED}🎯 CRÍTICO:{END} {BOLD}{player.crit_chance}%{END}
+{BLUE}🛡️  DEFESA:{END} {BOLD}{player.defense}{END}
+
+{BLUE}=========== EQUIPAMENTOS ==========={END}
+
+ARMA: {BOLD}{player.equipped_weapon or "Nenhuma"}{END}
+ARMADURA: {BOLD}{player.equipped_armor or "Nenhuma"}{END}
+{YELLOW}🌟 REPUTAÇÃO: {END}{BOLD}{player.reputation}{END}
+
+{BLUE}===================================={END}
+
+[{BLUE}Pressione {END}{BOLD}ENTER{END}{BLUE} para continuar{END}]
+
+{BLUE}===================================={END}''', delay=0.005)
+    input()
+
 escolhas = {
     'porta': {
         'descricao': 'Porta de metal enferrujada',
@@ -169,7 +234,7 @@ def first_choice(player):
             elif acao == 'porta':
                 if player.has_item('keys', 'Chave da cela'):
                     input()
-                    slow_print(f"[{BLUE}A chave se encaixa perfeitamente no cadeado{END}")
+                    slow_print(f"[{BLUE}A chave se encaixa perfeitamente no cadeado{END}]")
                     input()
                     clear_screen()
                     very_slow_print("A porta se abre com um rangido sinistro...")
@@ -295,11 +360,13 @@ def second_choice():
             sys.exit()
         elif way == '1':
             clear_screen()
-            slow_print('Você decidiu ir pelo caminho da esquerda')
+            slow_print(f'{GREEN}- Então irei pela floresta')
+            input('')
             return 'left'
         elif way == '2':
             clear_screen()
-            slow_print('Você decidiu ir pelo caminho da direita')
+            slow_print(f'{GREEN}- Então irei pelo rio')
+            input('')
             return 'right'
         else:
             slow_print(f"\n{RED}Opção inválida. Tente novamente.{RED}", delay=0.08)
@@ -340,30 +407,25 @@ def left_way():
 
 def right_way():
     clear_screen()
-    slow_print('[Barulho de explosão atrás de você]')
-    slow_print('...', delay=0.4)
-
-def show_status(player):
-    clear_screen()
-    slow_print(f'''{BLUE}====== STATUS DE {player.name.upper()} ======={END}
-
-{GREEN}SAÚDE:{END} {BOLD}{player.health}/20{END}
-{YELLOW}ATAQUE:{END} {BOLD}{player.attack}{END}
-{RED}CRÍTICO:{END} {BOLD}{player.crit_chance}{END}
-{BLUE}DEFESA:{END} {BOLD}{player.defense}{END}
-
-{BLUE}=========== EQUIPAMENTOS ==========={END}
-
-ARMA: {BOLD}{player.equipped_weapon or "Nenhuma"}{END}
-ARMADURA: {BOLD}{player.equipped_armor or "Nenhuma"}{END}
-{YELLOW}REPUTAÇÃO: {END}{BOLD}{player.reputation}{END}
-
-{BLUE}===================================={END}
-
-[{BLUE}Pressione {END}{BOLD}ENTER{END}{BLUE} para continuar{END}]
-
-{BLUE}===================================={END}''', delay=0.005)
+    slow_print('...')
     input()
+    slow_print('Um pouco adiante, você vê outra placa com uma informação')
+    input()
+    clear_screen()
+    while True:
+        slow_print(f'''{BOLD}======================================={END}
+{colored_text(f"{GREEN}     Deseja ver a placa ou ignorar?{END}", BOLD)}
+{colored_text("1 - Ver", GREEN)}
+{colored_text("ENTER - Ignorar", RED)}
+{BOLD}======================================={END}''', delay=0.01)
+        slow_print('Digite sua escolha:')
+        choice = input()
+
+        if choice == '1':
+            sign.show_sign('menu_jogo')
+            escolha = global_input(player).lower()
+            if escolha == 'm':
+                show_status(player)
 
 # Game start
 def debug_mode():
@@ -373,9 +435,9 @@ def debug_mode():
     
 
     while True:
-        slow_print('Escolha a cena que deseja testar:')
+        slow_print('Escolha a cena que deseja testar:', delay=0.005)
         print('')
-        slow_print('Início [1], Prisão [2], Pós Prisão [3], Mostrar Menu [4]')
+        slow_print('Início [1], Prisão [2], Pós Prisão [3], Mostrar Menu [4], Rio [5]', delay=0.005)
         scene = input()
     
         if scene == '1':
@@ -390,10 +452,17 @@ def debug_mode():
         elif scene == '4':
             show_status(player)
             clear_screen()
+        elif scene == '5':
+            right_way()
+            clear_screen()
         else:
             slow_print('Digite uma opção válida', delay=0.08)
             clear_screen()
-            
+
+    return player
+
+player = debug_mode()
+   
 def main():
     # Game setup
     player_name = game_introduction()
@@ -417,7 +486,7 @@ def main():
 if __name__ == "__main__":
     #main()
 
-    # To enter in debug mode, comment "main()" line and uncomment "debug_mode()" line
+    # To enter in debug mode, comment "main()" line and uncomment "debug_mode()" line and player var
     debug_mode()
 
 def rio():
