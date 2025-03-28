@@ -3,6 +3,7 @@ import sys
 import os
 import time
 from colorama import Fore, Style, init
+import pickle
 
 # Initialize colorama
 init()
@@ -86,7 +87,7 @@ class Player:
             sys.exit()
         elif self.health <= 5:
             slow_print(f"{YELLOW}Aviso: Sua saúde está crítica!{END}")
-
+            
 # Game Signs
 class SignsManager:
     def __init__(self):
@@ -100,7 +101,9 @@ class SignsManager:
             # Placa 2: Instruções do Menu (Exclusiva!)
             "menu_jogo": {
                 "header": f"{YELLOW}======================================={END}",
-                "text": f"{BOLD}    Pressione 'm' para abrir o menu{END}",
+                "text": f"""
+{BOLD}    Pressione 'm' para abrir o menu{END}
+""",
                 "footer": f"{YELLOW}======================================={END}"
             }
         }
@@ -130,16 +133,21 @@ def global_input(player, prompt=""):
 
 signs_manager = SignsManager()
 
+def save_game(player):
+    with open('save.dat', 'wb') as file:
+        pickle.dump(player, file)
+
 def show_status(player):
     clear_screen()
-    slow_print(f'''{BLUE}====== STATUS DE {player.name.upper()} ======={END}
+    slow_print(f'''{BLUE}===================================={END}
+{BOLD}NOME: {player.name}{END}
 
 {GREEN}❤️  SAÚDE:{END} {BOLD}{player.health:02d}/20{END}
 {YELLOW}⚔️  ATAQUE:{END} {BOLD}{player.attack}{END}
 {RED}🎯 CRÍTICO:{END} {BOLD}{player.crit_chance}%{END}
-{BLUE}🛡️  DEFESA:{END} {BOLD}{player.defense}{END}
+{BLUE}🛡️ DEFESA:{END} {BOLD}{player.defense}{END}
 
-{BLUE}=========== EQUIPAMENTOS ==========={END}
+{BLUE}==========={END}{BOLD} EQUIPAMENTOS {END}{BLUE}==========={END}
 
 ARMA: {BOLD}{player.equipped_weapon or "Nenhuma"}{END}
 ARMADURA: {BOLD}{player.equipped_armor or "Nenhuma"}{END}
@@ -338,7 +346,7 @@ Digite sua escolha:"""
     clear_screen()
     slow_print("Você sai da cela e se encontra em um corredor escuro...")
     input()
-
+    
 def second_scene():
     clear_screen()
     slow_print(f'''{BLUE}======================================={END}
@@ -360,12 +368,12 @@ def second_choice():
             sys.exit()
         elif way == '1':
             clear_screen()
-            slow_print(f'{GREEN}- Então irei pela floresta')
+            slow_print(f'{GREEN}- Então irei pela floresta{END}')
             input('')
             return 'left'
         elif way == '2':
             clear_screen()
-            slow_print(f'{GREEN}- Então irei pelo rio')
+            slow_print(f'{GREEN}- Então irei pelo rio{END}')
             input('')
             return 'right'
         else:
@@ -402,10 +410,10 @@ leva até uma árvore e que se divide para dois lados.''')
     input()
     clear_screen()
 
-def left_way():
+def left_way(player):
     slow_print('jaojdoejojedw')
 
-def right_way():
+def right_way(player):
     clear_screen()
     slow_print('...')
     input()
@@ -416,28 +424,35 @@ def right_way():
         slow_print(f'''{BOLD}======================================={END}
 {colored_text(f"{GREEN}     Deseja ver a placa ou ignorar?{END}", BOLD)}
 {colored_text("1 - Ver", GREEN)}
-{colored_text("ENTER - Ignorar", RED)}
+{colored_text("2 - Ignorar", RED)}
 {BOLD}======================================={END}''', delay=0.01)
         slow_print('Digite sua escolha:')
         choice = input()
 
         if choice == '1':
+            clear_screen()
             sign.show_sign('menu_jogo')
             escolha = global_input(player).lower()
             if escolha == 'm':
                 show_status(player)
+            break
+        elif choice == '2':
+            break
+        else:
+            break
 
 # Game start
 def debug_mode():
     # DevMode
-    player = Player("DebugPlayer")  # Create a debugger player
-    player.add_to_inventory('keys', 'Chave da cela')  # Add important items to inventory
-    
+    player = Player("DebugPlayer")  # Cria aqui
+    player.add_to_inventory('keys', 'Chave da cela')
 
     while True:
         slow_print('Escolha a cena que deseja testar:', delay=0.005)
         print('')
-        slow_print('Início [1], Prisão [2], Pós Prisão [3], Mostrar Menu [4], Rio [5]', delay=0.005)
+        slow_print(f'''Início [1], Prisão [2], Pós Prisão [3], Mostrar Menu [4], Rio [5]
+
+{RED}Sair {END}{BOLD}[q]{END}''', delay=0.005)
         scene = input()
     
         if scene == '1':
@@ -453,23 +468,23 @@ def debug_mode():
             show_status(player)
             clear_screen()
         elif scene == '5':
-            right_way()
+            right_way(player)
             clear_screen()
+        elif scene == 'q':
+            sys.exit()
         else:
             slow_print('Digite uma opção válida', delay=0.08)
             clear_screen()
 
     return player
-
-player = debug_mode()
    
 def main():
     # Game setup
     player_name = game_introduction()
-    hero = Player(player_name)
+    player = Player(player_name)
     
     # Start the story
-    initial_scene(hero)
+    initial_scene(player)
     
     # Continue story...
     slow_print("Sua aventura está apenas começando...")
@@ -479,15 +494,15 @@ def main():
 
     # story line
     if game == 'left':
-        left_way()
+        left_way(player)
     elif game == 'right':
-        right_way()
+        right_way(player)
 
 if __name__ == "__main__":
-    #main()
+    main()
 
     # To enter in debug mode, comment "main()" line and uncomment "debug_mode()" line and player var
-    debug_mode()
+    #player = debug_mode()
 
 def rio():
     def menu():
